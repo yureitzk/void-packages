@@ -1,0 +1,20 @@
+#!/bin/sh
+
+_user=_redsocks
+pid_file=/run/redsocks.pid
+! [ -f $pid_file ] &&
+	touch $pid_file &&
+	chown $_user:$_user $pid_file
+
+exec 2>&1
+
+# Add $ARGS for more arguments
+[ -r ./conf ] && . ./conf
+: ${CONF_FILE:=/etc/redsocks.conf}
+# Make sure a configuration file exists
+[ -e "${CONF_FILE}" ] || exit 1
+: ${CONF_FLAG:=-c $CONF_FILE}
+# Test the configuration file
+redsocks -t ${CONF_FLAG} >/dev/null 2>&1 || exit 1
+
+exec chpst -u $_user:$_user redsocks ${CONF_FLAG} ${ARGS} -p $pid_file 2>&1
